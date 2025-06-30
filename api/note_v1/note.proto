@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package note_v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/GolZrd/easy-grpc/pkg/note_v1;note_v1";
+
+// Описываем наш сервис с методами
+service NoteV1 {
+    rpc Create(CreateRequest) returns (CreateResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc List(ListRequest) returns (ListResponse);
+    rpc Update(UpdateRequest) returns (google.protobuf.Empty);
+    rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+}
+
+// Описываем наши сообщения-структуры
+message NoteInfo {
+    string title = 1;
+    string content = 2;
+    string author = 3;
+    bool is_public = 4;
+}
+
+message Note {
+    int64 id = 1;
+    NoteInfo info = 2;
+    google.protobuf.Timestamp created_at = 3;
+    google.protobuf.Timestamp updated_at = 4;
+}
+
+// Отдельное сообщение для обновления заметки, позволяет обновить несколько полей, и если поле не указано, то оно остается неизменным
+message UpdateNoteInfo {
+    google.protobuf.StringValue title = 1;
+    google.protobuf.StringValue context = 2;
+    google.protobuf.StringValue author = 3;
+    google.protobuf.BoolValue is_public = 4;
+}
+
+// Описывем запросы и ответы для нашего сервиса
+
+// В данное сообщение встраиваем наш объект NoteInfo
+message CreateRequest {
+    NoteInfo info = 1;
+}
+
+// Ответ возвращает id
+message CreateResponse {
+    int64 id = 1;
+}
+
+// Получаем по id
+message GetRequest {
+    int64 id = 1;
+}
+
+// Ответ возвращает Note
+message GetResponse {
+    Note note = 1;
+}
+
+// Получаем список заметок
+message ListRequest {
+    int64 limit = 1;
+    int64 offset = 2;
+}
+
+// Ответ возвращает список заметок
+message ListResponse {
+    repeated Note notes = 1;
+}
+
+// Обновляем заметку
+message UpdateRequest {
+    int64 id = 1;
+    UpdateNoteInfo info = 2;
+}
+
+message DeleteRequest {
+    int64 id = 1;
+}
