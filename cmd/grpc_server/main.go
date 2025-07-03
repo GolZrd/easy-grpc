@@ -2,52 +2,90 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 
 	desc "github.com/GolZrd/easy-grpc/pkg/note_v1"
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/jackc/pgx/v4/pgxpool"
+
+	"github.com/GolZrd/easy-grpc/internal/config"
+	"github.com/GolZrd/easy-grpc/internal/repository/note"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const grpcPort = 50051
-
+// Добавляем repository, это интерфейс, чтобы не завязываться на конкретную реализацию
 type server struct {
 	desc.UnimplementedNoteV1Server
+	NoteRepository note.NoteRepository
+}
+
+// Описываем метод Create
+func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
+	id, err := s.NoteRepository.Create(ctx, req.GetInfo())
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("Inserted note with id: %d", id)
+
+	return &desc.CreateResponse{
+		Id: id,
+	}, nil
 }
 
 // Описываем метод Get
 func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
-	log.Printf("Note id: %d", req.Id)
+	noteObj, err := s.NoteRepository.Get(ctx, req.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("id: %d, title: %s, body: %s, created_at: %v, updated_at: %v\n", noteObj.GetId(), noteObj.GetInfo().GetTitle(),
+		noteObj.GetInfo().GetContent(), noteObj.GetCreatedAt(), noteObj.GetUpdatedAt())
 
 	return &desc.GetResponse{
-		Note: &desc.Note{
-			Id: req.Id,
-			Info: &desc.NoteInfo{
-				Title:    gofakeit.BeerName(),
-				Content:  gofakeit.IPv4Address(),
-				Author:   gofakeit.Name(),
-				IsPublic: gofakeit.Bool(),
-			},
-			CreatedAt: timestamppb.New(gofakeit.Date()),
-			UpdatedAt: timestamppb.New(gofakeit.Date()),
-		},
+		Note: noteObj,
 	}, nil
 }
 
 func main() {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
+	ctx := context.Background()
+
+	// Считываем переменные окружения
+	err := config.Load(".env")
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
+
+	grpcConfig, err := config.NewGRPCConfig()
+	if err != nil {
+		log.Fatalf("failed to load grpc config: %v", err)
+	}
+
+	pgConfig, err := config.NewPGConfig()
+	if err != nil {
+		log.Fatalf("failed to load pg config: %v", err)
+	}
+
+	lis, err := net.Listen("tcp", grpcConfig.Address())
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	// Создаем пул соединений с БД
+	pool, err := pgxpool.Connect(ctx, pgConfig.DSN())
+	if err != nil {
+		log.Fatalf("failed to connect to db: %v", err)
+	}
+	defer pool.Close()
+
+	noteRepo := note.NewRepository(pool)
+
 	s := grpc.NewServer()
 	// включаем reflection на сервере
 	reflection.Register(s)
-	desc.RegisterNoteV1Server(s, &server{})
+	desc.RegisterNoteV1Server(s, &server{NoteRepository: noteRepo})
 
 	log.Printf("server listening at %v", lis.Addr())
 
