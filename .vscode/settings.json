@@ -10,5 +10,6 @@
             "username": "note-user",
             "password": "note-password"
         }
-    ]
+    ],
+    "postman.settings.dotenv-detection-notification-visibility": false
 }

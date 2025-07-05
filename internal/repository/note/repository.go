@@ -3,9 +3,9 @@ package note
 import (
 	"context"
 
+	"github.com/GolZrd/easy-grpc/internal/model"
 	"github.com/GolZrd/easy-grpc/internal/repository/note/converter"
-	"github.com/GolZrd/easy-grpc/internal/repository/note/model"
-	desc "github.com/GolZrd/easy-grpc/pkg/note_v1"
+	modelRepo "github.com/GolZrd/easy-grpc/internal/repository/note/model"
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -21,8 +21,8 @@ const (
 )
 
 type NoteRepository interface {
-	Create(ctx context.Context, info *desc.NoteInfo) (int64, error)
-	Get(ctx context.Context, id int64) (*desc.Note, error)
+	Create(ctx context.Context, info *model.NoteInfo) (int64, error)
+	Get(ctx context.Context, id int64) (*model.Note, error)
 }
 
 type repo struct {
@@ -35,7 +35,7 @@ func NewRepository(db *pgxpool.Pool) NoteRepository {
 	}
 }
 
-func (r *repo) Create(ctx context.Context, info *desc.NoteInfo) (int64, error) {
+func (r *repo) Create(ctx context.Context, info *model.NoteInfo) (int64, error) {
 	builder := squirrel.Insert(tableName).PlaceholderFormat(squirrel.Dollar).Columns(titleColumn, contentColumn).Values(info.Title, info.Content).Suffix("RETURNING id")
 	query, args, err := builder.ToSql()
 	if err != nil {
@@ -51,7 +51,7 @@ func (r *repo) Create(ctx context.Context, info *desc.NoteInfo) (int64, error) {
 	return id, nil
 }
 
-func (r *repo) Get(ctx context.Context, id int64) (*desc.Note, error) {
+func (r *repo) Get(ctx context.Context, id int64) (*model.Note, error) {
 	builder := squirrel.Select(idColumn, titleColumn, contentColumn, CreatedAtColumn, UpdatedAtColumn).
 		PlaceholderFormat(squirrel.Dollar).
 		From(tableName).Where(squirrel.Eq{idColumn: id}).
@@ -62,7 +62,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*desc.Note, error) {
 		return nil, err
 	}
 
-	var note model.Note
+	var note modelRepo.Note
 	err = r.db.QueryRow(ctx, query, args...).Scan(&note.ID, &note.Info.Title, &note.Info.Content, &note.CreatedAt, &note.UpdatedAt)
 	if err != nil {
 		return nil, err

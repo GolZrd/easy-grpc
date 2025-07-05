@@ -1,27 +1,24 @@
 package converter
 
 import (
-	"github.com/GolZrd/easy-grpc/internal/repository/note/model"
-	desc "github.com/GolZrd/easy-grpc/pkg/note_v1"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/GolZrd/easy-grpc/internal/model"
+	modelRepo "github.com/GolZrd/easy-grpc/internal/repository/note/model"
 )
 
-func ToNoteFromRepo(note *model.Note) *desc.Note {
-	var updatedAt *timestamppb.Timestamp
-	if note.UpdatedAt.Valid {
-		updatedAt = timestamppb.New(note.CreatedAt)
-	}
+// Описываем конвертеры между репозиторием и сервисом.
+// modelRepo - модель внутри репо слоя, а model - внутри бизнес логики, то есть слоя Service
+func ToNoteFromRepo(note *modelRepo.Note) *model.Note {
 
-	return &desc.Note{
-		Id:        note.ID,
+	return &model.Note{
+		ID:        note.ID,
 		Info:      ToNoteInfoFromRepo(note.Info),
-		CreatedAt: timestamppb.New(note.CreatedAt),
-		UpdatedAt: updatedAt,
+		CreatedAt: note.CreatedAt,
+		UpdatedAt: note.UpdatedAt,
 	}
 }
 
-func ToNoteInfoFromRepo(info model.Info) *desc.NoteInfo {
-	return &desc.NoteInfo{
+func ToNoteInfoFromRepo(info modelRepo.NoteInfo) model.NoteInfo {
+	return model.NoteInfo{
 		Title:   info.Title,
 		Content: info.Content,
 	}

@@ -9,20 +9,22 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 
 	"github.com/GolZrd/easy-grpc/internal/config"
+	"github.com/GolZrd/easy-grpc/internal/converter"
 	"github.com/GolZrd/easy-grpc/internal/repository/note"
+	service "github.com/GolZrd/easy-grpc/internal/service/note"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-// Добавляем repository, это интерфейс, чтобы не завязываться на конкретную реализацию
+// Заменили repository на noteService, так как добавил новый слой бизнес логики
 type server struct {
 	desc.UnimplementedNoteV1Server
-	NoteRepository note.NoteRepository
+	noteService service.NoteService
 }
 
 // Описываем метод Create
 func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
-	id, err := s.NoteRepository.Create(ctx, req.GetInfo())
+	id, err := s.noteService.Create(ctx, converter.ToNoteInfoFromDesc(req.GetInfo()))
 	if err != nil {
 		return nil, err
 	}
@@ -36,16 +38,15 @@ func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.Cre
 
 // Описываем метод Get
 func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
-	noteObj, err := s.NoteRepository.Get(ctx, req.GetId())
+	noteObj, err := s.noteService.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("id: %d, title: %s, body: %s, created_at: %v, updated_at: %v\n", noteObj.GetId(), noteObj.GetInfo().GetTitle(),
-		noteObj.GetInfo().GetContent(), noteObj.GetCreatedAt(), noteObj.GetUpdatedAt())
-
+	log.Printf("id: %d, title: %s, body: %s, created_at: %v, updated_at: %v\n", noteObj.ID, noteObj.Info.Title,
+		noteObj.Info.Content, noteObj.CreatedAt, noteObj.UpdatedAt)
 	return &desc.GetResponse{
-		Note: noteObj,
+		Note: converter.ToNoteFromService(noteObj),
 	}, nil
 }
 
@@ -81,11 +82,13 @@ func main() {
 	defer pool.Close()
 
 	noteRepo := note.NewRepository(pool)
+	//Добавляем сервис
+	noteService := service.NewService(noteRepo)
 
 	s := grpc.NewServer()
 	// включаем reflection на сервере
 	reflection.Register(s)
-	desc.RegisterNoteV1Server(s, &server{NoteRepository: noteRepo})
+	desc.RegisterNoteV1Server(s, &server{noteService: noteService})
 
 	log.Printf("server listening at %v", lis.Addr())
 
