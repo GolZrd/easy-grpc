@@ -7,6 +7,7 @@ import (
 	noteAPI "github.com/GolZrd/easy-grpc/internal/api/note"
 	"github.com/GolZrd/easy-grpc/internal/client/db"
 	"github.com/GolZrd/easy-grpc/internal/client/db/pg"
+	"github.com/GolZrd/easy-grpc/internal/client/db/transaction"
 	"github.com/GolZrd/easy-grpc/internal/closer"
 	"github.com/GolZrd/easy-grpc/internal/config"
 	noteRepository "github.com/GolZrd/easy-grpc/internal/repository/note"
@@ -19,6 +20,7 @@ type serviceProvider struct {
 	grpcConfig config.GRPCConfig
 
 	dbClient       db.Client
+	txManager      db.TxManager
 	noteRepository noteRepository.NoteRepository
 
 	noteService noteService.NoteService
@@ -56,7 +58,7 @@ func (s *serviceProvider) GRPCConfig() config.GRPCConfig {
 	return s.grpcConfig
 }
 
-func (s *serviceProvider) PgPool(ctx context.Context) db.Client {
+func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		cl, err := pg.New(ctx, s.PGConfig().DSN())
 		if err != nil {
@@ -76,16 +78,24 @@ func (s *serviceProvider) PgPool(ctx context.Context) db.Client {
 	return s.dbClient
 }
 
+func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
+	if s.txManager == nil {
+		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
+	}
+
+	return s.txManager
+}
+
 func (s *serviceProvider) NoteRepository(ctx context.Context) noteRepository.NoteRepository {
 	if s.noteRepository == nil {
-		s.noteRepository = noteRepository.NewRepository(s.PgPool(ctx))
+		s.noteRepository = noteRepository.NewRepository(s.DBClient(ctx))
 	}
 	return s.noteRepository
 }
 
 func (s *serviceProvider) NoteService(ctx context.Context) noteService.NoteService {
 	if s.noteService == nil {
-		s.noteService = noteService.NewService(s.NoteRepository(ctx))
+		s.noteService = noteService.NewService(s.NoteRepository(ctx), s.TxManager(ctx))
 	}
 
 	return s.noteService
