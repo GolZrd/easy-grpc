@@ -5,11 +5,12 @@ import (
 	"log"
 
 	noteAPI "github.com/GolZrd/easy-grpc/internal/api/note"
+	"github.com/GolZrd/easy-grpc/internal/client/db"
+	"github.com/GolZrd/easy-grpc/internal/client/db/pg"
 	"github.com/GolZrd/easy-grpc/internal/closer"
 	"github.com/GolZrd/easy-grpc/internal/config"
 	noteRepository "github.com/GolZrd/easy-grpc/internal/repository/note"
 	noteService "github.com/GolZrd/easy-grpc/internal/service/note"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // Описываем структуру для хранения зависимостей
@@ -17,7 +18,7 @@ type serviceProvider struct {
 	pgConfig   config.PGConfig
 	grpcConfig config.GRPCConfig
 
-	pgPool         *pgxpool.Pool
+	dbClient       db.Client
 	noteRepository noteRepository.NoteRepository
 
 	noteService noteService.NoteService
@@ -55,27 +56,24 @@ func (s *serviceProvider) GRPCConfig() config.GRPCConfig {
 	return s.grpcConfig
 }
 
-func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
-	if s.pgPool == nil {
-		pool, err := pgxpool.Connect(ctx, s.PGConfig().DSN())
+func (s *serviceProvider) PgPool(ctx context.Context) db.Client {
+	if s.dbClient == nil {
+		cl, err := pg.New(ctx, s.PGConfig().DSN())
 		if err != nil {
 			log.Fatalf("failed to connect to db: %s", err.Error())
 		}
 
-		err = pool.Ping(ctx)
+		err = cl.DB().Ping(ctx)
 		if err != nil {
 			log.Fatalf("ping error: %s", err.Error())
 		}
 
-		closer.Add(func() error {
-			pool.Close()
-			return nil
-		})
+		closer.Add(cl.Close)
 
-		s.pgPool = pool
+		s.dbClient = cl
 	}
 
-	return s.pgPool
+	return s.dbClient
 }
 
 func (s *serviceProvider) NoteRepository(ctx context.Context) noteRepository.NoteRepository {

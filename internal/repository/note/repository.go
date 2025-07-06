@@ -3,11 +3,11 @@ package note
 import (
 	"context"
 
+	"github.com/GolZrd/easy-grpc/internal/client/db"
 	"github.com/GolZrd/easy-grpc/internal/model"
 	"github.com/GolZrd/easy-grpc/internal/repository/note/converter"
 	modelRepo "github.com/GolZrd/easy-grpc/internal/repository/note/model"
 	"github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 const (
@@ -26,10 +26,10 @@ type NoteRepository interface {
 }
 
 type repo struct {
-	db *pgxpool.Pool
+	db db.Client
 }
 
-func NewRepository(db *pgxpool.Pool) NoteRepository {
+func NewRepository(db db.Client) NoteRepository {
 	return &repo{
 		db: db,
 	}
@@ -42,8 +42,13 @@ func (r *repo) Create(ctx context.Context, info *model.NoteInfo) (int64, error) 
 		return 0, err
 	}
 
+	q := db.Query{
+		Name:     "note_repository.Create",
+		QueryRow: query,
+	}
+
 	var id int64
-	err = r.db.QueryRow(ctx, query, args...).Scan(&id)
+	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -62,8 +67,13 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.Note, error) {
 		return nil, err
 	}
 
+	q := db.Query{
+		Name:     "note_repository.Get",
+		QueryRow: query,
+	}
+
 	var note modelRepo.Note
-	err = r.db.QueryRow(ctx, query, args...).Scan(&note.ID, &note.Info.Title, &note.Info.Content, &note.CreatedAt, &note.UpdatedAt)
+	err = r.db.DB().ScanOneContext(ctx, &note, q, args...)
 	if err != nil {
 		return nil, err
 	}
