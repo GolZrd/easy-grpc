@@ -16,6 +16,8 @@ import (
 )
 
 func TestCreate(t *testing.T) {
+	t.Parallel()
+
 	type noteServiceMockFunc func(mc *minimock.Controller) noteService.NoteService
 
 	type args struct {
@@ -99,6 +101,8 @@ func TestCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			noteServiceMock := tt.noteServiceMock(mc)
 			// Создаем структуру newImplementation, которую определили в пакете api
 			api := noteAPI.NewImplementation(noteServiceMock)

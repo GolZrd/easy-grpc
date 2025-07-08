@@ -17,6 +17,8 @@ import (
 )
 
 func TestCreate(t *testing.T) {
+	t.Parallel()
+
 	type noteRepositoryMockFunc func(mc *minimock.Controller) noteRepository.NoteRepository
 	type txManagerMockFunc func(mc *minimock.Controller) db.TxManager
 
@@ -103,6 +105,9 @@ func TestCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Параллельно выполняем подтесты
+			t.Parallel()
+
 			noteRepoMock := tt.noteRepositoryMock(mc)
 			txManagerMock := tt.txManagerMock(mc)
 			service := note.NewService(noteRepoMock, txManagerMock)
