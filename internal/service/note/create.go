@@ -19,10 +19,10 @@ func (s *service) Create(ctx context.Context, info *model.NoteInfo) (int64, erro
 		// return errors.New("test error")
 
 		// для примера сразу вызовем get
-		_, errTx = s.NoteRepository.Get(ctx, id)
-		if errTx != nil {
-			return errTx
-		}
+		// _, errTx = s.NoteRepository.Get(ctx, id)
+		// if errTx != nil {
+		// 	return errTx
+		// }
 
 		return nil
 	})
