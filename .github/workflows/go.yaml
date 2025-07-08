@@ -1,0 +1,25 @@
+name: GO
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24
+          cache-dependency-path: go.sum
+      
+      - name: Build
+        run: go build -o ./bin -v ./...
+
+      - name: Test
+        run: go test -v ./...
