@@ -32,11 +32,13 @@ func TestGet(t *testing.T) {
 		ctx = context.Background()
 		mc  = minimock.NewController(t)
 
+		testStartTime = time.Now().Truncate(time.Second)
+
 		id        = gofakeit.Int64()
 		title     = gofakeit.Animal()
 		content   = gofakeit.Animal()
-		createdAt = time.Now()
-		updatedAt = time.Now() // Если я ставлю gofakeit.Date(), то тесты не проходят, но если поставить как createdAt или time.Now(), то проходят
+		createdAt = testStartTime
+		updatedAt = testStartTime // Если я ставлю gofakeit.Date(), то тесты не проходят, но если поставить как createdAt или time.Now(), то проходят
 
 		serviceErr = fmt.Errorf("service error")
 
