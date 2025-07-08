@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/GolZrd/easy-grpc/internal/client/db"
 	txMocs "github.com/GolZrd/easy-grpc/internal/client/mocks"
@@ -35,8 +36,8 @@ func TestGet(t *testing.T) {
 		id        = gofakeit.Int64()
 		title     = gofakeit.Animal()
 		content   = gofakeit.Animal()
-		createdAt = gofakeit.Date()
-		updatedAt = gofakeit.Date()
+		createdAt = time.Now()
+		updatedAt = time.Now()
 
 		repoErr = fmt.Errorf("repository error")
 
