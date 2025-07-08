@@ -105,8 +105,6 @@ func TestCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Параллельно выполняем подтесты
-			t.Parallel()
 
 			noteRepoMock := tt.noteRepositoryMock(mc)
 			txManagerMock := tt.txManagerMock(mc)

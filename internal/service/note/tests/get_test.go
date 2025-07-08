@@ -33,11 +33,13 @@ func TestGet(t *testing.T) {
 		ctx = context.Background()
 		mc  = minimock.NewController(t)
 
+		testStartTime = time.Now().Truncate(time.Second)
+
 		id        = gofakeit.Int64()
 		title     = gofakeit.Animal()
 		content   = gofakeit.Animal()
-		createdAt = gofakeit.Date().Truncate(time.Second)
-		updatedAt = gofakeit.Date().Truncate(time.Second)
+		createdAt = testStartTime
+		updatedAt = testStartTime
 
 		repoErr = fmt.Errorf("repository error")
 
@@ -102,8 +104,6 @@ func TestGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Параллельно выполняем подтесты
-			t.Parallel()
 
 			noteRepositoryMock := tt.noteRepositoryMock(mc)
 			txManagerMock := tt.txManagerMock(mc)
