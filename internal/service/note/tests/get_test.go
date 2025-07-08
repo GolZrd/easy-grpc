@@ -36,8 +36,8 @@ func TestGet(t *testing.T) {
 		id        = gofakeit.Int64()
 		title     = gofakeit.Animal()
 		content   = gofakeit.Animal()
-		createdAt = time.Now()
-		updatedAt = time.Now()
+		createdAt = gofakeit.Date().Truncate(time.Second)
+		updatedAt = gofakeit.Date().Truncate(time.Second)
 
 		repoErr = fmt.Errorf("repository error")
 
@@ -82,7 +82,7 @@ func TestGet(t *testing.T) {
 			},
 		},
 		{
-			name: "service error case",
+			name: "repo error case",
 			args: args{
 				ctx: ctx,
 				req: id,

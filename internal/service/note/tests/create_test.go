@@ -77,7 +77,7 @@ func TestCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "service error case",
+			name: "repo error case",
 			args: args{
 				ctx: ctx,
 				req: req,
