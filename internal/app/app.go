@@ -7,6 +7,7 @@ import (
 
 	"github.com/GolZrd/easy-grpc/internal/closer"
 	"github.com/GolZrd/easy-grpc/internal/config"
+	"github.com/GolZrd/easy-grpc/internal/interceptor"
 	desc "github.com/GolZrd/easy-grpc/pkg/note_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -71,7 +72,11 @@ func (a *App) InitServiceProvider(_ context.Context) error {
 }
 
 func (a *App) InitGRPCServer(ctx context.Context) error {
-	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+	a.grpcServer = grpc.NewServer(
+		grpc.Creds(insecure.NewCredentials()),
+		// Добавили интерцептор
+		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
+	)
 
 	reflection.Register(a.grpcServer)
 
