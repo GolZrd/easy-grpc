@@ -5,6 +5,7 @@ package note_v1;
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/GolZrd/easy-grpc/pkg/note_v1;note_v1";
 
@@ -19,7 +20,7 @@ service NoteV1 {
 
 // Описываем наши сообщения-структуры
 message NoteInfo {
-    string title = 1;
+    string title = 1 [(validate.rules).string = {min_len: 1, max_len: 50}];
     string content = 2;
 }
 
