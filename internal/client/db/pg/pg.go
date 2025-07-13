@@ -53,7 +53,7 @@ func (p *pg) ScanAllContext(ctx context.Context, dest interface{}, q db.Query, a
 }
 
 func (p *pg) ExecContext(ctx context.Context, q db.Query, args ...interface{}) (pgconn.CommandTag, error) {
-	logQuery(ctx, q, args...)
+	//logQuery(ctx, q, args...)
 
 	tx, ok := ctx.Value(TxKey).(pgx.Tx)
 	if ok {
@@ -64,7 +64,7 @@ func (p *pg) ExecContext(ctx context.Context, q db.Query, args ...interface{}) (
 }
 
 func (p *pg) QueryContext(ctx context.Context, q db.Query, args ...interface{}) (pgx.Rows, error) {
-	logQuery(ctx, q, args...)
+	//logQuery(ctx, q, args...)
 
 	// Если получается скастовать объект pgx.Tx, то выполняем запрос внутри транзакции
 	tx, ok := ctx.Value(TxKey).(pgx.Tx)
@@ -76,7 +76,7 @@ func (p *pg) QueryContext(ctx context.Context, q db.Query, args ...interface{}) 
 }
 
 func (p *pg) QueryRowContext(ctx context.Context, q db.Query, args ...interface{}) pgx.Row {
-	logQuery(ctx, q, args...)
+	//logQuery(ctx, q, args...)
 
 	tx, ok := ctx.Value(TxKey).(pgx.Tx)
 	if ok {
@@ -102,7 +102,7 @@ func MakeContextTx(ctx context.Context, tx pgx.Tx) context.Context {
 	return context.WithValue(ctx, TxKey, tx)
 }
 
-// Лог
+// Очень подробный лог выполняемых запросов
 func logQuery(ctx context.Context, q db.Query, args ...interface{}) {
 	prettyQuery := prettier.Pretty(q.QueryRow, prettier.PlaceholderDollar, args...)
 	log.Println(
