@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	noteAPI "github.com/GolZrd/easy-grpc/internal/api/note"
+	"github.com/GolZrd/easy-grpc/internal/logger"
 	"github.com/GolZrd/easy-grpc/internal/model"
 	serviceMocks "github.com/GolZrd/easy-grpc/internal/service/mocks"
 	noteService "github.com/GolZrd/easy-grpc/internal/service/note"
@@ -13,9 +14,13 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gojuno/minimock/v3"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestCreate(t *testing.T) {
+	// Инициализируем логгер
+	logger.Init(zap.NewNop().Core())
+
 	t.Parallel()
 
 	type noteServiceMockFunc func(mc *minimock.Controller) noteService.NoteService

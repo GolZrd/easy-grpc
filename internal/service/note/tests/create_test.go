@@ -7,6 +7,7 @@ import (
 
 	"github.com/GolZrd/easy-grpc/internal/client/db"
 	txMocs "github.com/GolZrd/easy-grpc/internal/client/mocks"
+	"github.com/GolZrd/easy-grpc/internal/logger"
 	"github.com/GolZrd/easy-grpc/internal/model"
 	repoMocs "github.com/GolZrd/easy-grpc/internal/repository/mocks"
 	noteRepository "github.com/GolZrd/easy-grpc/internal/repository/note"
@@ -14,9 +15,13 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gojuno/minimock/v3"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestCreate(t *testing.T) {
+	// Инициализируем логгер
+	logger.Init(zap.NewNop().Core())
+
 	t.Parallel()
 
 	type noteRepositoryMockFunc func(mc *minimock.Controller) noteRepository.NoteRepository
